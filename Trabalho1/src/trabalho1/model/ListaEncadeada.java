@@ -39,7 +39,7 @@ public class ListaEncadeada<T> {
             if(objeto.getProximo() == null){
                 return null;
             }
-            if(objeto.getInfo() == info){
+            if(objeto.getInfo().equals(info)){
                 return objeto;
             }
             objeto = objeto.getProximo();           
@@ -50,7 +50,8 @@ public class ListaEncadeada<T> {
         NoLista objeto = primeiro;
         NoLista anterior = null;
         
-        while(objeto != null && objeto.getInfo() != info){
+        while(objeto != null
+           && !objeto.getInfo().equals(info)){
             anterior = objeto;
             objeto = objeto.getProximo();                                    
         }
