@@ -11,17 +11,37 @@ import java.util.Scanner;
 
 /**
  *
- * @author Notebook
+ * @author Mello feat Calazans
  */
 public class Compilador {
     
     private File arquivo;
-    private PilhaLista<String> pilhaTags;
+    private PilhaLista<String> pilhaTagsAbertura;
     private PilhaLista<String> pilhaTagsBackup;
     private ListaEncadeada<String> listaTagsFechamento;
+    private ListaEncadeada<TagEncontrada> listaTagsEncontradas;
     private SituacaoAnalise situacaoAnalise;
     private ListaEncadeada<Ocorrencia> listaOcorrencias;
     private Scanner arquivoHTML;
+    
+    public Compilador(File arquivo){
+        atualizaArquivoHTML( arquivo );
+    }        
+    
+    public void atualizaArquivoHTML(File arquivo){
+        try{         
+          this.arquivo         = arquivo;
+          pilhaTagsAbertura    = new PilhaLista<>();          
+          pilhaTagsBackup      = new PilhaLista<>();
+          listaTagsFechamento  = new ListaEncadeada<>();
+          listaTagsEncontradas = new ListaEncadeada<>();
+          situacaoAnalise      = SituacaoAnalise.AguardandoAnalise;
+          listaOcorrencias     = new ListaEncadeada<>();                    
+          arquivoHTML          = new Scanner(this.arquivo, "UTF-8"); 
+        }catch( FileNotFoundException e ){
+            throw new RuntimeException( "Arquivo ("+ this.arquivo.getName() +") não encontrado!" );
+        }
+    }    
     
     public SituacaoAnalise getSituacaoAnalise(){
         return this.situacaoAnalise;
@@ -37,27 +57,25 @@ public class Compilador {
             indice++;
         }
         return ocorrencias;
-    }
+    }                            
     
-    public Compilador(File arquivo){
-        atualizaArquivoHTML( arquivo );
-    }
-    
-    public String exibeTags( ){
-        return pilhaTagsBackup.toString( );
-    }
-    
-    public int totalTags( ){
-        return pilhaTagsBackup.tamanhoPilha( );
-    }
-    
-    private void gerarOcorrencia(int numeroLinha, String textoOcorrencia, String textoSugestao){
-        Ocorrencia ocorrencia;
-        ocorrencia = new Ocorrencia( numeroLinha,
-                                     textoOcorrencia + ";",
-                                     textoSugestao + ";");
-        listaOcorrencias.inserir( ocorrencia );
-    }
+    public void analisarArquivo( ){
+        if( situacaoAnalise == SituacaoAnalise.AguardandoAnalise ){
+            int numeroLinha = 1;            
+            while( listaOcorrencias.estaVazia()
+                && arquivoHTML.hasNext() ){
+                analisarLinha( arquivoHTML.nextLine(),
+                               numeroLinha);               
+                numeroLinha++;
+            }
+            arquivoHTML.close();
+            processaTagsFinais();                        
+            if( listaOcorrencias.estaVazia( ) )
+                situacaoAnalise = SituacaoAnalise.AnalisadoSemErro;
+            else
+                situacaoAnalise = SituacaoAnalise.AnalisadoComErro;            
+        }
+    }                    
     
     private void analisarLinha(String textoLinha, int numeroLinha){
         textoLinha = textoLinha.toUpperCase( ); // Deixa toda e qualquer letra em maiusculo                                
@@ -73,27 +91,26 @@ public class Compilador {
                     if( posicaoEspaco > -1 ){
                         subPalavra = subPalavra.substring(0, posicaoEspaco) + ">";
                     }
-                    int posicaoBarra = subPalavra.indexOf("/>");
-                    if( posicaoBarra > -1 ){
-                        subPalavra = subPalavra.substring(0, posicaoBarra) + ">";
+                    int posicaoBarraFechamento = subPalavra.indexOf("/>");
+                    if( posicaoBarraFechamento > -1 ){
+                        subPalavra = subPalavra.substring(0, posicaoBarraFechamento) + ">";
                     }                                        
                     int posicaoTagFechamento = subPalavra.indexOf("</");
                     if( !isSingletonTag( subPalavra ) // Testa as Singleton Tags
                      && posicaoTagFechamento > -1 ){
-                        //é Fechamento
-                        if( pilhaTags.peek( ).equals( subPalavra.replace("/", "") ) ){
-                            pilhaTags.pop();
+                        //é Fechamento de Tag
+                        if( pilhaTagsAbertura.peek( ).equals( subPalavra.replace("/", "") ) ){                            
+                            pilhaTagsAbertura.pop();
                         }else{
                             //Gerar ocorrência por as tags não serem iguais
                             gerarOcorrencia( numeroLinha,
-                                             "Esperava o fechamento da tag "+ pilhaTags.peek() +", mas encontrou "+ subPalavra,
-                                             "Realizar o fechamento da tag "+ pilhaTags.peek() +" antes da tag "+ subPalavra );
+                                             "Esperava o fechamento da tag "+ pilhaTagsAbertura.peek() +", mas encontrou "+ subPalavra,
+                                             "Realizar o fechamento da tag "+ pilhaTagsAbertura.peek() +" antes da tag "+ subPalavra );
                             break;
                         }                                    
                     }else{
-                        //é Abertura
-                        pilhaTags.push(subPalavra);
-                        pilhaTagsBackup.push(subPalavra);
+                        //é Abertura de Tag
+                        pilhaTagsAbertura.push(subPalavra);
                     }                            
                 }else{
                     int posicaoEspaco = subPalavra.indexOf(" ");
@@ -108,11 +125,11 @@ public class Compilador {
                 }            
             }    
         }
-    }    
+    }
     
     private void processaTagsFinais(){
         try{
-            int quantidadeRegistros = pilhaTags.tamanhoPilha();
+            int quantidadeRegistros = pilhaTagsAbertura.tamanhoPilha();
             if( quantidadeRegistros > 0 ){
                 arquivoHTML = new Scanner( this.arquivo, "UTF-8" );
                 String textoLinha;            
@@ -136,15 +153,15 @@ public class Compilador {
                 }
                 arquivoHTML.close();
                 while( quantidadeRegistros > 0 ){
-                    NoLista<String> tag = listaTagsFechamento.buscar( pilhaTags.peek().replace("<", "</") );
+                    NoLista<String> tag = listaTagsFechamento.buscar( pilhaTagsAbertura.peek().replace("<", "</") );
                     if( tag != null ){
                         listaTagsFechamento.retirar( tag.getInfo() );                    
                     }else{
                         gerarOcorrencia( 0, 
-                                         "Não encontado o fechamento da tag "+ pilhaTags.peek() +" no arquivo "+ arquivo.getName(), 
-                                         "Relizar o fechamento da tag "+ pilhaTags.peek());                    
+                                         "Não encontado o fechamento da tag "+ pilhaTagsAbertura.peek() +" no arquivo "+ arquivo.getName(), 
+                                         "Relizar o fechamento da tag "+ pilhaTagsAbertura.peek());                    
                     }                    
-                    pilhaTags.pop();
+                    pilhaTagsAbertura.pop();
                     quantidadeRegistros--;
                 }   
             }            
@@ -156,37 +173,13 @@ public class Compilador {
         }
     }
     
-    public void analisarArquivo( ){
-        if( situacaoAnalise == SituacaoAnalise.AguardandoAnalise ){
-            int numeroLinha = 1;            
-            while( listaOcorrencias.estaVazia()
-                && arquivoHTML.hasNext() ){
-                analisarLinha( arquivoHTML.nextLine(),
-                               numeroLinha);               
-                numeroLinha++;
-            }
-            arquivoHTML.close();
-            processaTagsFinais();                        
-            if( listaOcorrencias.estaVazia( ) )
-                situacaoAnalise = SituacaoAnalise.AnalisadoSemErro;
-            else
-                situacaoAnalise = SituacaoAnalise.AnalisadoComErro;            
-        }
-    }            
-    
-    public void atualizaArquivoHTML(File arquivo){
-        try{         
-          this.arquivo        = arquivo;
-          pilhaTags           = new PilhaLista<>();          
-          pilhaTagsBackup     = new PilhaLista<>();
-          situacaoAnalise     = SituacaoAnalise.AguardandoAnalise;
-          listaOcorrencias    = new ListaEncadeada<>();
-          listaTagsFechamento = new ListaEncadeada<>();
-          arquivoHTML         = new Scanner(this.arquivo, "UTF-8"); 
-        }catch( FileNotFoundException e ){
-            throw new RuntimeException( "Arquivo ("+ this.arquivo.getName() +") não encontrado!" );
-        }
-    }    
+    private void gerarOcorrencia(int numeroLinha, String textoOcorrencia, String textoSugestao){
+        Ocorrencia ocorrencia;
+        ocorrencia = new Ocorrencia( numeroLinha,
+                                     textoOcorrencia + ";",
+                                     textoSugestao + ";");
+        listaOcorrencias.inserir( ocorrencia );
+    }
     
     private boolean isSingletonTag(String tag){
         boolean isSingleton = false;
@@ -199,6 +192,76 @@ public class Compilador {
             }
         }
         return isSingleton;
+    }
+            
+    public String exibeTags( ){
+        return pilhaTagsBackup.toString( );
+    }
+    
+    public int totalTags( ){
+        return pilhaTagsBackup.tamanhoPilha( );
+    }        
+    
+    public String contabilizarTags(){
+        try{            
+            String subPalavra;
+            if( this.situacaoAnalise != SituacaoAnalise.AguardandoAnalise ){
+                arquivoHTML = new Scanner( this.arquivo, "UTF-8" );
+                String textoLinha; 
+                while( arquivoHTML.hasNext() ){
+                    textoLinha = arquivoHTML.nextLine();
+                    while( textoLinha.contains( "<" ) ){
+                        int posicaoInicio = textoLinha.indexOf("<");
+                        if( posicaoInicio > -1 ){
+                            int posicaoFinal = textoLinha.indexOf(">");
+                            if( posicaoFinal > -1 ){
+                                subPalavra = textoLinha.substring(posicaoInicio, 
+                                                                  posicaoFinal + 1);
+                                textoLinha = textoLinha.substring(posicaoFinal + 1, 
+                                                                  textoLinha.length());
+                                int posicaoEspaco = subPalavra.indexOf(" ");
+                                if( posicaoEspaco > -1 ){
+                                    subPalavra = subPalavra.substring(0, posicaoEspaco) + ">";
+                                }
+                                int posicaoBarraFechamento = subPalavra.indexOf("/>");
+                                if( posicaoBarraFechamento > -1 ){
+                                    subPalavra = subPalavra.substring(0, posicaoBarraFechamento) + ">";
+                                }
+                                adicionaTagEncontrada( subPalavra );                                                                                           
+                            }else{
+                                subPalavra = textoLinha.substring(posicaoInicio, 
+                                                                  textoLinha.length());
+                                int posicaoEspaco = subPalavra.indexOf(" ");
+                                if( posicaoEspaco > -1 ){
+                                    subPalavra = subPalavra.substring(0, posicaoEspaco);
+                                }
+                                subPalavra += ">";
+                                adicionaTagEncontrada( subPalavra );
+                                break;
+                            }            
+                        }    
+                    }
+                }
+            }            
+            return listaTagsEncontradas.toString();
+        }catch( FileNotFoundException e){
+            if( arquivoHTML.hasNext() ){
+                arquivoHTML.close();
+            }
+            throw new RuntimeException("Arquivo ("+ arquivo.getName() +") não encontrado!");
+        }
+    }
+    
+    private void adicionaTagEncontrada( String tag ){
+        TagEncontrada t = new TagEncontrada();
+        t.setTag( tag );
+        NoLista<TagEncontrada> reg = listaTagsEncontradas.buscar( t );
+        if( reg != null ){
+            reg.getInfo().setTotal( reg.getInfo().getTotal() + 1 );
+        }else{                                    
+            t.setTotal( 1 );
+            listaTagsEncontradas.inserir( t );
+        }   
     }
     
 }
