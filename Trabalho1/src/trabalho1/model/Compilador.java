@@ -186,7 +186,7 @@ public class Compilador {
         tag = tag.replace("<", "");
         tag = tag.replace(">", "");
         for( TagsSingleton t : TagsSingleton.values() ){
-            if( tag.equals( t.name( ) ) ){
+            if( tag.contains(t.name( ) ) ){
                 isSingleton = true;
                 break;
             }
