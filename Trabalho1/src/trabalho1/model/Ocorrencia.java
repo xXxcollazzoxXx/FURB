@@ -70,9 +70,9 @@ public class Ocorrencia {
         String toString;
         toString = "Linha: "+ this.linha;
         if( !this.ocorrencia.equals("") )
-            toString += ", Ocorrência: "+ this.ocorrencia;
+            toString += " Ocorrência: "+ this.ocorrencia;
         if( !this.sugestao.equals("") )
-            toString += ", Sugestao: "+ this.sugestao;
+            toString += " Sugestao: "+ this.sugestao;
         return toString;
     }
     

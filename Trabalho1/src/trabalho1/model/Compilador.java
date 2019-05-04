@@ -80,50 +80,72 @@ public class Compilador {
     private void analisarLinha(String textoLinha, int numeroLinha){
         textoLinha = textoLinha.toUpperCase( ); // Deixa toda e qualquer letra em maiusculo                                
         String subPalavra = "";
+        boolean lbComentarioEmAberto = false;
         while( textoLinha.contains( "<" ) ){
-            int posicaoInicio = textoLinha.indexOf("<");
-            if( posicaoInicio > -1 ){
-                int posicaoFinal = textoLinha.indexOf(">");
-                if( posicaoFinal > -1 ){                                                    
-                    subPalavra = textoLinha.substring(posicaoInicio, posicaoFinal + 1);
-                    textoLinha = textoLinha.substring(posicaoFinal + 1, textoLinha.length());                        
-                    int posicaoEspaco = subPalavra.indexOf(" ");
-                    if( posicaoEspaco > -1 ){
-                        subPalavra = subPalavra.substring(0, posicaoEspaco) + ">";
-                    }
-                    int posicaoBarraFechamento = subPalavra.indexOf("/>");
-                    if( posicaoBarraFechamento > -1 ){
-                        subPalavra = subPalavra.substring(0, posicaoBarraFechamento) + ">";
-                    }                                        
-                    int posicaoTagFechamento = subPalavra.indexOf("</");
-                    if( !isSingletonTag( subPalavra ) // Testa as Singleton Tags
-                     && posicaoTagFechamento > -1 ){
-                        //é Fechamento de Tag
-                        if( pilhaTagsAbertura.peek( ).equals( subPalavra.replace("/", "") ) ){                            
-                            pilhaTagsAbertura.pop();
-                        }else{
-                            //Gerar ocorrência por as tags não serem iguais
-                            gerarOcorrencia( numeroLinha,
-                                             "Esperava o fechamento da tag "+ pilhaTagsAbertura.peek() +", mas encontrou "+ subPalavra,
-                                             "Realizar o fechamento da tag "+ pilhaTagsAbertura.peek() +" antes da tag "+ subPalavra );
-                            break;
-                        }                                    
-                    }else{
-                        //é Abertura de Tag
-                        pilhaTagsAbertura.push(subPalavra);
-                    }                            
+            int posicaoAberturaComentario = textoLinha.indexOf("<!--");
+            if( posicaoAberturaComentario > -1 ){
+                lbComentarioEmAberto = true;                
+            }                                    
+            if( lbComentarioEmAberto ){
+                int posicaoFechamentoComentario = textoLinha.indexOf("-->");
+                if( posicaoFechamentoComentario > -1 ){
+                    lbComentarioEmAberto = false;
+                    textoLinha = textoLinha.substring(posicaoFechamentoComentario + 3, textoLinha.length());
                 }else{
-                    int posicaoEspaco = subPalavra.indexOf(" ");
-                    if( posicaoEspaco > -1 ){
-                        subPalavra = subPalavra.substring(0, posicaoEspaco);
-                    }
-                    subPalavra = subPalavra.replace( "<", "" );
-                    gerarOcorrencia( numeroLinha,
-                                     "Não encontrado o caracter de fechamento ('>') da tag "+ subPalavra,
-                                     "Realizar o fechamento da tag "+ subPalavra );
                     break;
-                }            
-            }    
+                }
+            }else{
+                int posicaoFechamentoComentario = textoLinha.indexOf("-->");
+                if( posicaoFechamentoComentario > -1 ){
+                    textoLinha = textoLinha.substring(posicaoFechamentoComentario + 3, textoLinha.length());
+                    gerarOcorrencia(numeroLinha, 
+                                    "Fechamento do comentário (-->) incorreto.",
+                                    "Verifique seu arquivo, pois existe um fechamento de comentário incorreto!");                    
+                }
+                int posicaoInicio = textoLinha.indexOf("<");
+                if( posicaoInicio > -1 ){
+                    int posicaoFinal = textoLinha.indexOf(">");
+                    if( posicaoFinal > -1 ){                                                    
+                        subPalavra = textoLinha.substring(posicaoInicio, posicaoFinal + 1);
+                        textoLinha = textoLinha.substring(posicaoFinal + 1, textoLinha.length());
+                        int posicaoEspaco = subPalavra.indexOf(" ");
+                        if( posicaoEspaco > -1 ){
+                            subPalavra = subPalavra.substring(0, posicaoEspaco) + ">";
+                        }
+                        int posicaoBarraFechamento = subPalavra.indexOf("/>");
+                        if( posicaoBarraFechamento > -1 ){
+                            subPalavra = subPalavra.substring(0, posicaoBarraFechamento) + ">";
+                        }                                        
+                        int posicaoTagFechamento = subPalavra.indexOf("</");
+                        if( posicaoTagFechamento > -1 ){
+                            //é Fechamento de Tag
+                            if( pilhaTagsAbertura.peek( ).equals( subPalavra.replace("/", "") ) ){                            
+                                pilhaTagsAbertura.pop();
+                            }else{
+                                //Gerar ocorrência por as tags não serem iguais
+                                gerarOcorrencia( numeroLinha,
+                                                 "Esperava o fechamento da tag "+ pilhaTagsAbertura.peek() +", mas encontrou "+ subPalavra,
+                                                 "Realizar o fechamento da tag "+ pilhaTagsAbertura.peek() +" antes da tag "+ subPalavra );
+                                break;
+                            }                                    
+                            }else{
+                            //é Abertura de Tag                        
+                            if( !SingletonTags.isSingletonTag( subPalavra ) )// Não pode empilhar SingletonTags
+                                pilhaTagsAbertura.push( subPalavra );
+                        }                            
+                    }else{
+                        int posicaoEspaco = subPalavra.indexOf(" ");
+                        if( posicaoEspaco > -1 ){
+                            subPalavra = subPalavra.substring(0, posicaoEspaco);
+                        }
+                        subPalavra = subPalavra.replace( "<", "" );
+                        gerarOcorrencia( numeroLinha,
+                                         "Não encontrado o caracter de fechamento ('>') da tag "+ subPalavra,
+                                         "Realizar o fechamento da tag "+ subPalavra );
+                        break;
+                    }            
+                }    
+            }
         }
     }
     
@@ -179,20 +201,7 @@ public class Compilador {
                                      textoOcorrencia + ";",
                                      textoSugestao + ";");
         listaOcorrencias.inserir( ocorrencia );
-    }
-    
-    private boolean isSingletonTag(String tag){
-        boolean isSingleton = false;
-        tag = tag.replace("<", "");
-        tag = tag.replace(">", "");
-        for( TagsSingleton t : TagsSingleton.values() ){
-            if( tag.contains(t.name( ) ) ){
-                isSingleton = true;
-                break;
-            }
-        }
-        return isSingleton;
-    }
+    }        
             
     public String exibeTags( ){
         return pilhaTagsBackup.toString( );
