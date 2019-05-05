@@ -16,13 +16,13 @@ import java.util.Scanner;
 public class Compilador {
     
     private File arquivo;
-    private PilhaLista<String> pilhaTagsAbertura;
-    private PilhaLista<String> pilhaTagsBackup;
+    private PilhaLista<String> pilhaTagsAbertura;    
     private ListaEncadeada<String> listaTagsFechamento;
     private ListaEncadeada<TagEncontrada> listaTagsEncontradas;
     private SituacaoAnalise situacaoAnalise;
     private ListaEncadeada<Ocorrencia> listaOcorrencias;
     private Scanner arquivoHTML;
+    boolean lbComentarioEmAberto = false;
     
     public Compilador(File arquivo){
         atualizaArquivoHTML( arquivo );
@@ -32,7 +32,6 @@ public class Compilador {
         try{         
           this.arquivo         = arquivo;
           pilhaTagsAbertura    = new PilhaLista<>();          
-          pilhaTagsBackup      = new PilhaLista<>();
           listaTagsFechamento  = new ListaEncadeada<>();
           listaTagsEncontradas = new ListaEncadeada<>();
           situacaoAnalise      = SituacaoAnalise.AguardandoAnalise;
@@ -61,6 +60,7 @@ public class Compilador {
     
     public void analisarArquivo( ){
         if( situacaoAnalise == SituacaoAnalise.AguardandoAnalise ){
+            lbComentarioEmAberto = false;
             int numeroLinha = 1;            
             while( listaOcorrencias.estaVazia()
                 && arquivoHTML.hasNext() ){
@@ -79,86 +79,152 @@ public class Compilador {
     
     private void analisarLinha(String textoLinha, int numeroLinha){
         textoLinha = textoLinha.toUpperCase( ); // Deixa toda e qualquer letra em maiusculo                                
-        String subPalavra = "";
-        boolean lbComentarioEmAberto = false;
+        String subPalavra = "";        
         while( textoLinha.contains( "<" ) ){
-            int posicaoAberturaComentario = textoLinha.indexOf("<!--");
-            if( posicaoAberturaComentario > -1 ){
-                lbComentarioEmAberto = true;                
-            }                                    
-            if( lbComentarioEmAberto ){
+            if( !lbComentarioEmAberto ){
+                int posicaoAberturaComentario = textoLinha.indexOf("<!--");
+                while( posicaoAberturaComentario > -1 ){
+                    lbComentarioEmAberto = true;
+                    int posicaoFechamentoComentario = textoLinha.indexOf("-->");
+                    if( posicaoFechamentoComentario > -1 ){                    
+                        lbComentarioEmAberto = false;
+                        textoLinha = textoLinha.substring(0, posicaoAberturaComentario) + textoLinha.substring(posicaoFechamentoComentario + 3, textoLinha.length());                    
+                    }else{
+                        textoLinha = textoLinha.substring(0, posicaoAberturaComentario);
+                    }
+                    posicaoAberturaComentario = textoLinha.indexOf("<!--");
+                }
+            }else{                
                 int posicaoFechamentoComentario = textoLinha.indexOf("-->");
                 if( posicaoFechamentoComentario > -1 ){
                     lbComentarioEmAberto = false;
                     textoLinha = textoLinha.substring(posicaoFechamentoComentario + 3, textoLinha.length());
                 }else{
-                    break;
-                }
-            }else{
-                int posicaoFechamentoComentario = textoLinha.indexOf("-->");
-                if( posicaoFechamentoComentario > -1 ){
-                    textoLinha = textoLinha.substring(posicaoFechamentoComentario + 3, textoLinha.length());
-                    gerarOcorrencia(numeroLinha, 
-                                    "Fechamento do comentário (-->) incorreto.",
-                                    "Verifique seu arquivo, pois existe um fechamento de comentário incorreto!");                    
-                }
-                int posicaoInicio = textoLinha.indexOf("<");
-                if( posicaoInicio > -1 ){
-                    int posicaoFinal = textoLinha.indexOf(">");
-                    if( posicaoFinal > -1 ){                                                    
-                        subPalavra = textoLinha.substring(posicaoInicio, posicaoFinal + 1);
-                        textoLinha = textoLinha.substring(posicaoFinal + 1, textoLinha.length());
-                        int posicaoEspaco = subPalavra.indexOf(" ");
-                        if( posicaoEspaco > -1 ){
-                            subPalavra = subPalavra.substring(0, posicaoEspaco) + ">";
-                        }
-                        int posicaoBarraFechamento = subPalavra.indexOf("/>");
-                        if( posicaoBarraFechamento > -1 ){
-                            subPalavra = subPalavra.substring(0, posicaoBarraFechamento) + ">";
-                        }                                        
-                        int posicaoTagFechamento = subPalavra.indexOf("</");
-                        if( posicaoTagFechamento > -1 ){
-                            //é Fechamento de Tag
-                            if( pilhaTagsAbertura.peek( ).equals( subPalavra.replace("/", "") ) ){                            
-                                pilhaTagsAbertura.pop();
-                            }else{
-                                //Gerar ocorrência por as tags não serem iguais
-                                gerarOcorrencia( numeroLinha,
-                                                 "Esperava o fechamento da tag "+ pilhaTagsAbertura.peek() +", mas encontrou "+ subPalavra,
-                                                 "Realizar o fechamento da tag "+ pilhaTagsAbertura.peek() +" antes da tag "+ subPalavra );
-                                break;
-                            }                                    
-                            }else{
-                            //é Abertura de Tag                        
-                            if( !SingletonTags.isSingletonTag( subPalavra ) )// Não pode empilhar SingletonTags
-                                pilhaTagsAbertura.push( subPalavra );
-                        }                            
+                    if( !textoLinha.contains("<!--") );                    
+                        break;                   
+                }    
+                int posicaoAberturaComentario = textoLinha.indexOf("<!--");
+                while( posicaoAberturaComentario > -1 ){
+                    lbComentarioEmAberto = true;
+                    posicaoFechamentoComentario = textoLinha.indexOf("-->");
+                    if( posicaoFechamentoComentario > -1 ){                    
+                        lbComentarioEmAberto = false;
+                        textoLinha = textoLinha.substring(0, posicaoAberturaComentario) + textoLinha.substring(posicaoFechamentoComentario + 3, textoLinha.length());                    
                     }else{
-                        int posicaoEspaco = subPalavra.indexOf(" ");
-                        if( posicaoEspaco > -1 ){
-                            subPalavra = subPalavra.substring(0, posicaoEspaco);
-                        }
-                        subPalavra = subPalavra.replace( "<", "" );
-                        gerarOcorrencia( numeroLinha,
-                                         "Não encontrado o caracter de fechamento ('>') da tag "+ subPalavra,
-                                         "Realizar o fechamento da tag "+ subPalavra );
-                        break;
-                    }            
+                        textoLinha = textoLinha.substring(0, posicaoAberturaComentario);
+                    }
+                    posicaoAberturaComentario = textoLinha.indexOf("<!--");
                 }    
             }
+            boolean adicionou = false;
+            int posicaoFechamentoComentario = textoLinha.indexOf("-->");
+            while( posicaoFechamentoComentario > -1 ){
+                textoLinha = textoLinha.substring(0, posicaoFechamentoComentario) + textoLinha.substring(posicaoFechamentoComentario + 3, textoLinha.length());                
+                if( !adicionou ){
+                    adicionou = true;
+                    gerarOcorrencia(numeroLinha,
+                                    "Fechamento(s) do(s) comentário(s) (-->) incorreto(s).",
+                                    "Verifique seu arquivo, pois existe(m) algum(uns) fechamento(s) de comentário(s) incorreto(s)!");                    
+                }                    
+                posicaoFechamentoComentario = textoLinha.indexOf("-->");
+            }
+            int posicaoInicio = textoLinha.indexOf("<");
+            if( posicaoInicio > -1 ){
+                int posicaoFinal = textoLinha.indexOf(">");
+                if( posicaoFinal > -1 ){                                                    
+                    subPalavra = textoLinha.substring(posicaoInicio, posicaoFinal + 1);
+                    textoLinha = textoLinha.substring(posicaoFinal + 1, textoLinha.length());
+                    int posicaoEspaco = subPalavra.indexOf(" ");
+                    if( posicaoEspaco > -1 ){
+                        subPalavra = subPalavra.substring(0, posicaoEspaco) + ">";
+                    }
+                    int posicaoBarraFechamento = subPalavra.indexOf("/>");
+                    if( posicaoBarraFechamento > -1 ){
+                        subPalavra = subPalavra.substring(0, posicaoBarraFechamento) + ">";
+                    }                                        
+                    int posicaoTagFechamento = subPalavra.indexOf("</");
+                    if( posicaoTagFechamento > -1 ){
+                        //é Fechamento de Tag
+                        if( pilhaTagsAbertura.peek( ).equals( subPalavra.replace("/", "") ) ){                            
+                            pilhaTagsAbertura.pop();
+                        }else{
+                            //Gerar ocorrência por as tags não serem iguais
+                            gerarOcorrencia( numeroLinha,
+                                             "Esperava o fechamento da tag "+ pilhaTagsAbertura.peek() +", mas encontrou "+ subPalavra,
+                                             "Realizar o fechamento da tag "+ pilhaTagsAbertura.peek() +" antes da tag "+ subPalavra );
+                            break;
+                        }                                    
+                    }else{
+                        //é Abertura de Tag                        
+                        if( !SingletonTags.isSingletonTag( subPalavra ) )// Não pode empilhar SingletonTags
+                            pilhaTagsAbertura.push( subPalavra );
+                    }                            
+                }else{
+                    int posicaoEspaco = subPalavra.indexOf(" ");
+                    if( posicaoEspaco > -1 ){
+                        subPalavra = subPalavra.substring(0, posicaoEspaco);
+                    }
+                    subPalavra = subPalavra.replace( "<", "" );
+                    gerarOcorrencia( numeroLinha,
+                                     "Não encontrado o caracter de fechamento ('>') da tag "+ subPalavra,
+                                     "Realizar o fechamento da tag "+ subPalavra );
+                    break;
+                }            
+            }                
         }
     }
     
     private void processaTagsFinais(){
         try{
-            int quantidadeRegistros = pilhaTagsAbertura.tamanhoPilha();
+            int quantidadeRegistros = pilhaTagsAbertura.tamanhoPilha();          
             if( quantidadeRegistros > 0 ){
                 arquivoHTML = new Scanner( this.arquivo, "UTF-8" );
                 String textoLinha;            
                 while( arquivoHTML.hasNext() ){
                     textoLinha = arquivoHTML.nextLine().replaceAll( " ", "" ); // Remove todo e qualquer espaço em branco
-                    textoLinha = textoLinha.toUpperCase(); // Transformar toda e qualquer letra em maiuscula
-                    while( textoLinha.contains( "</" ) ){        
+                    textoLinha = textoLinha.toUpperCase(); // Transformar toda e qualquer letra em maiuscula                    
+                    while( textoLinha.contains( "</" ) ){
+                        if( !lbComentarioEmAberto ){
+                            int posicaoAberturaComentario = textoLinha.indexOf("<!--");
+                            while( posicaoAberturaComentario > -1 ){
+                                lbComentarioEmAberto = true;
+                                int posicaoFechamentoComentario = textoLinha.indexOf("-->");
+                                if( posicaoFechamentoComentario > -1 ){                    
+                                    lbComentarioEmAberto = false;
+                                    textoLinha = textoLinha.substring(0, posicaoAberturaComentario) + textoLinha.substring(posicaoFechamentoComentario + 3, textoLinha.length());                    
+                                }else{
+                                    textoLinha = textoLinha.substring(0, posicaoAberturaComentario);
+                                }
+                                posicaoAberturaComentario = textoLinha.indexOf("<!--");
+                            }
+                        }else{                        
+                            int posicaoFechamentoComentario = textoLinha.indexOf("-->");
+                            if( posicaoFechamentoComentario > -1 ){
+                                lbComentarioEmAberto = false;
+                                textoLinha = textoLinha.substring(posicaoFechamentoComentario + 3, textoLinha.length());
+                            }else{
+                                if( !textoLinha.contains("<!--") );                    
+                                    break;                   
+                            }    
+                            int posicaoAberturaComentario = textoLinha.indexOf("<!--");
+                            while( posicaoAberturaComentario > -1 ){
+                                lbComentarioEmAberto = true;
+                                posicaoFechamentoComentario = textoLinha.indexOf("-->");
+                                if( posicaoFechamentoComentario > -1 ){                    
+                                    lbComentarioEmAberto = false;
+                                    textoLinha = textoLinha.substring(0, posicaoAberturaComentario) + textoLinha.substring(posicaoFechamentoComentario + 3, textoLinha.length());                    
+                                }else{
+                                    textoLinha = textoLinha.substring(0, posicaoAberturaComentario);
+                                }
+                                posicaoAberturaComentario = textoLinha.indexOf("<!--");
+                            }    
+                        }    
+                        boolean adicionou = false;
+                        int posicaoFechamentoComentario = textoLinha.indexOf("-->");
+                        while( posicaoFechamentoComentario > -1 ){
+                            textoLinha = textoLinha.substring(0, posicaoFechamentoComentario) + textoLinha.substring(posicaoFechamentoComentario + 3, textoLinha.length());
+                            posicaoFechamentoComentario = textoLinha.indexOf("-->");
+                        }
                         textoLinha = textoLinha.substring( textoLinha.indexOf( "</" ),
                                                            textoLinha.length() );
                         int posicaoFechamento = textoLinha.indexOf( ">" );
@@ -170,7 +236,7 @@ public class Compilador {
                                                                textoLinha.length() );
                         }else{
                             break;
-                        }
+                        }                        
                     }
                 }
                 arquivoHTML.close();
@@ -204,22 +270,77 @@ public class Compilador {
     }        
             
     public String exibeTags( ){
-        return pilhaTagsBackup.toString( );
+       if( this.situacaoAnalise != SituacaoAnalise.AguardandoAnalise ){
+           return listaTagsEncontradas.toString();
+       }else{
+           return "";
+       }
     }
     
     public int totalTags( ){
-        return pilhaTagsBackup.tamanhoPilha( );
+        if( this.situacaoAnalise != SituacaoAnalise.AguardandoAnalise ){
+            int totalTags = 0;
+            NoLista<TagEncontrada> noTag = listaTagsEncontradas.getPrimeiro();
+            while( noTag != null ){
+                totalTags += noTag.getInfo().getTotal();
+                noTag = noTag.getProximo();
+            }
+            return totalTags;
+        }else{
+            return 0;
+        }    
     }        
     
-    public String contabilizarTags(){
-        try{            
-            String subPalavra;
+    public void contabilizarTags(){
+        try{                        
             if( this.situacaoAnalise != SituacaoAnalise.AguardandoAnalise ){
                 arquivoHTML = new Scanner( this.arquivo, "UTF-8" );
                 String textoLinha; 
+                String subPalavra;                
                 while( arquivoHTML.hasNext() ){
                     textoLinha = arquivoHTML.nextLine();
                     while( textoLinha.contains( "<" ) ){
+                        if( !lbComentarioEmAberto ){
+                            int posicaoAberturaComentario = textoLinha.indexOf("<!--");
+                            while( posicaoAberturaComentario > -1 ){
+                                lbComentarioEmAberto = true;
+                                int posicaoFechamentoComentario = textoLinha.indexOf("-->");
+                                if( posicaoFechamentoComentario > -1 ){                    
+                                    lbComentarioEmAberto = false;
+                                    textoLinha = textoLinha.substring(0, posicaoAberturaComentario) + textoLinha.substring(posicaoFechamentoComentario + 3, textoLinha.length());                    
+                                }else{
+                                    textoLinha = textoLinha.substring(0, posicaoAberturaComentario);
+                                }
+                                posicaoAberturaComentario = textoLinha.indexOf("<!--");
+                            }    
+                        }else{                        
+                            int posicaoFechamentoComentario = textoLinha.indexOf("-->");
+                            if( posicaoFechamentoComentario > -1 ){
+                                lbComentarioEmAberto = false;
+                                textoLinha = textoLinha.substring(posicaoFechamentoComentario + 3, textoLinha.length());
+                            }else{
+                                if( !textoLinha.contains("<!--") );                    
+                                    break;                   
+                            }    
+                            int posicaoAberturaComentario = textoLinha.indexOf("<!--");
+                            while( posicaoAberturaComentario > -1 ){
+                                lbComentarioEmAberto = true;
+                                posicaoFechamentoComentario = textoLinha.indexOf("-->");
+                                if( posicaoFechamentoComentario > -1 ){                    
+                                    lbComentarioEmAberto = false;
+                                    textoLinha = textoLinha.substring(0, posicaoAberturaComentario) + textoLinha.substring(posicaoFechamentoComentario + 3, textoLinha.length());                    
+                                }else{
+                                    textoLinha = textoLinha.substring(0, posicaoAberturaComentario);
+                                }
+                                posicaoAberturaComentario = textoLinha.indexOf("<!--");
+                            }    
+                        } 
+                        boolean adicionou = false;
+                        int posicaoFechamentoComentario = textoLinha.indexOf("-->");
+                        while( posicaoFechamentoComentario > -1 ){
+                            textoLinha = textoLinha.substring(0, posicaoFechamentoComentario) + textoLinha.substring(posicaoFechamentoComentario + 3, textoLinha.length());
+                            posicaoFechamentoComentario = textoLinha.indexOf("-->");
+                        }
                         int posicaoInicio = textoLinha.indexOf("<");
                         if( posicaoInicio > -1 ){
                             int posicaoFinal = textoLinha.indexOf(">");
@@ -251,8 +372,7 @@ public class Compilador {
                         }    
                     }
                 }
-            }            
-            return listaTagsEncontradas.toString();
+            }                        
         }catch( FileNotFoundException e){
             if( arquivoHTML.hasNext() ){
                 arquivoHTML.close();

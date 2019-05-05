@@ -32,7 +32,7 @@ public class TagEncontrada{
     }
     
     public int getTotal(){
-        return this.getTotal();
+        return this.total;
     }
         
     @Override
@@ -47,7 +47,7 @@ public class TagEncontrada{
             return false;
         }             
         final TagEncontrada other = (TagEncontrada) obj;
-        if (this.tag != other.tag) {
+        if (!this.tag.equals( other.tag )) {
             return false;
         }
         return true;        

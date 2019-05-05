@@ -72,7 +72,7 @@ public class Ocorrencia {
         if( !this.ocorrencia.equals("") )
             toString += " Ocorrência: "+ this.ocorrencia;
         if( !this.sugestao.equals("") )
-            toString += " Sugestao: "+ this.sugestao;
+            toString += " Sugestão: "+ this.sugestao;
         return toString;
     }
     

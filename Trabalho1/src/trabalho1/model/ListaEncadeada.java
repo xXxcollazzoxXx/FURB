@@ -35,8 +35,8 @@ public class ListaEncadeada<T> {
     public NoLista<T> buscar(T info){
         NoLista objeto = new NoLista();
         objeto = primeiro;
-        while(true){            
-            if(objeto.getProximo() == null){
+        while(objeto != null){
+            if( objeto.getProximo() == null){
                 return null;
             }
             if(objeto.getInfo().equals(info)){
@@ -44,6 +44,7 @@ public class ListaEncadeada<T> {
             }
             objeto = objeto.getProximo();           
         }
+        return null;
     }
     
     public void retirar(T info){
