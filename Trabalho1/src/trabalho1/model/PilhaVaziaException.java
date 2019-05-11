@@ -7,14 +7,21 @@ package trabalho1.model;
 
 /**
  *
- * @author Notebook
+ * @authors William Mello e Victor Calazans
  */
 public class PilhaVaziaException extends RuntimeException{
     
+    /**
+     * Construtor padrão da classe PilhaVaziaException
+     */
     public PilhaVaziaException(){
         super();
     }
     
+    /**
+     * Construtor da classe PilhaVaziaException que recebe como argumento um texto String
+     * @param string texto a ser exibido;
+     */
     public PilhaVaziaException(String string){
         super(string);
     }

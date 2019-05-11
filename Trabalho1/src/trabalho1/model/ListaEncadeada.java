@@ -7,20 +7,31 @@ package trabalho1.model;
 
 /**
  *
- * @author Notebook
+ * @authors William Mello e Victor Calazans
  */
 public class ListaEncadeada<T> {
     
     private NoLista<T> primeiro;    
     
+    /**
+     * Construtor da classe ListaEncadeada
+     */
     public ListaEncadeada(){
         primeiro = null;
     } 
     
+    /**
+     * Método get do objeto primeiro;
+     * @return Devolve um NoLista
+     */
     public NoLista<T> getPrimeiro(){
         return this.primeiro;
     }
     
+    /**
+     * Método que inseri uma nova informação na lista encadeada
+     * @param info Informação que se deseja inserir na lista encadeada
+     */    
     public void inserir(T info){
         NoLista objeto = new NoLista();
         objeto.setInfo(info);
@@ -28,10 +39,19 @@ public class ListaEncadeada<T> {
         primeiro = objeto;
     }
     
+    /**
+     * Método responsável por verificar se a lista encadeada está vazia
+     * @return true se a lista encadeada estiver vazia ou false se a lista encadeada não estiver vazia
+     */
     public boolean estaVazia(){
         return getPrimeiro() == null;
     }
  
+    /**
+     * Método que busca um determinado objeto
+     * @param info Informação que se deseja encontrar na lista encadeada
+     * @return Retorna o nó encontrado ou null se não encontrar
+     */
     public NoLista<T> buscar(T info){
         NoLista objeto = new NoLista();
         objeto = primeiro;
@@ -47,6 +67,10 @@ public class ListaEncadeada<T> {
         return null;
     }
     
+    /**
+     * Método responsável por retirar um Nó da lista encadeada
+     * @param info Informação que se deseja retirar da lista encadeada
+     */
     public void retirar(T info){
         NoLista objeto = primeiro;
         NoLista anterior = null;
@@ -66,6 +90,10 @@ public class ListaEncadeada<T> {
         }        
     }
     
+    /**
+     * Método que devolve o comprimento dessa lista encadeada
+     * @return Retorna a quantidade de itens da lista encadeada
+     */
     public int obterComprimento(){
         if(primeiro == null){
             return 0;
@@ -83,6 +111,11 @@ public class ListaEncadeada<T> {
         return quantidade;
     }
     
+    /**
+     * Método que retorna o nó de um índice fornecido como argumento
+     * @param idx Índice no qual se encontra o registro
+     * @return Retorna o nó do índice fornecido como argumento
+     */
     public NoLista<T> obterNo(int idx){        
         if(idx < 0){
             throw new IndexOutOfBoundsException();
@@ -102,6 +135,10 @@ public class ListaEncadeada<T> {
         }        
     }
     
+    /**
+     * Método responsável por montar a representação textual da lista encadeada
+     * @return retorna a representação textual da lista encadeada
+     */
     public String toString(){
         NoLista p = primeiro;
         String conteudo = "";

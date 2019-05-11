@@ -11,7 +11,7 @@ import java.util.Scanner;
 
 /**
  *
- * @author Mello feat Calazans
+ * @authors William Mello e Victor Calazans
  */
 public class Compilador {
     
@@ -22,12 +22,20 @@ public class Compilador {
     private SituacaoAnalise situacaoAnalise;
     private ListaEncadeada<Ocorrencia> listaOcorrencias;
     private Scanner arquivoHTML;
-    boolean lbComentarioEmAberto = false;
+    private boolean lbComentarioEmAberto = false;
     
+    /**
+     * Construtor da classe Compilador
+     * @param arquivo Arquivo na qual se encontra o atual arquivo HTML
+     */
     public Compilador(File arquivo){
         atualizaArquivoHTML( arquivo );
     }        
     
+    /**
+     * Método responsável por atualizar o arquivo HTML que se deseja analisar
+     * @param arquivo Arquivo na qual se encontra o arquivo HTML
+     */
     public void atualizaArquivoHTML(File arquivo){
         try{         
           this.arquivo         = arquivo;
@@ -41,11 +49,36 @@ public class Compilador {
             throw new RuntimeException( "Arquivo ("+ this.arquivo.getName() +") não encontrado!" );
         }
     }    
-    
+        
+    /**
+     * Método responsável por devolver a situação atual do arquivo HTML
+     * @return Devolve a situação atual do arquivo HTML
+     */
     public SituacaoAnalise getSituacaoAnalise(){
         return this.situacaoAnalise;
     }
     
+    /**
+     * Método responsável por devolver um vetor das tags encontradas
+     * @return Devolve um vetor de tags encontradas para uma melhor varredura das rotinas invocadoras
+     */
+    public TagEncontrada[] getTagsEncontradas(){
+        TagEncontrada[] tagsEncontradas = new TagEncontrada[ listaTagsEncontradas.obterComprimento() ];
+        NoLista<TagEncontrada> noTagEncontrada = listaTagsEncontradas.getPrimeiro();
+        int indice = 0;
+        while( noTagEncontrada != null ){
+            tagsEncontradas[ indice ] = noTagEncontrada.getInfo();
+            noTagEncontrada = noTagEncontrada.getProximo();
+            indice++;
+        }
+        return tagsEncontradas;
+    }
+    
+    
+    /**
+     * Método responsável por devolver um vetor das ocorrências encontradas
+     * @return Devolve um vetor de Ocorrências para melhor varredura nas rotinas invocadoras
+     */
     public Ocorrencia[] getOcorrencias(){
         Ocorrencia[] ocorrencias = new Ocorrencia[ listaOcorrencias.obterComprimento( ) ];
         NoLista<Ocorrencia> NoOcorrencia = listaOcorrencias.getPrimeiro();
@@ -58,6 +91,9 @@ public class Compilador {
         return ocorrencias;
     }                            
     
+    /**
+     * Método responsável por analisar o arquivo HTML no geral e definir a existência de erros ou não
+     */
     public void analisarArquivo( ){
         if( situacaoAnalise == SituacaoAnalise.AguardandoAnalise ){
             lbComentarioEmAberto = false;
@@ -69,7 +105,9 @@ public class Compilador {
                 numeroLinha++;
             }
             arquivoHTML.close();
-            processaTagsFinais();                        
+            if(listaOcorrencias.estaVazia()){
+                processaTagsFinais();
+            }
             if( listaOcorrencias.estaVazia( ) )
                 situacaoAnalise = SituacaoAnalise.AnalisadoSemErro;
             else
@@ -77,6 +115,11 @@ public class Compilador {
         }
     }                    
     
+    /**
+     * Método responsável por analisar minuciosamente algum erro da linha corrente do arquivo HTML
+     * @param textoLinha Linha na qual se deseja analisar
+     * @param numeroLinha Número da linha na qual essa linha se encontra no arquivo HTML
+     */
     private void analisarLinha(String textoLinha, int numeroLinha){
         textoLinha = textoLinha.toUpperCase( ); // Deixa toda e qualquer letra em maiusculo                                
         String subPalavra = "";        
@@ -174,6 +217,9 @@ public class Compilador {
         }
     }
     
+    /**
+     * Método responsável por processar as tags que faltaram fechamento, caso o arquivo não contenha nenhum problema eventual na primeira análise
+     */
     private void processaTagsFinais(){
         try{
             int quantidadeRegistros = pilhaTagsAbertura.tamanhoPilha();          
@@ -261,6 +307,12 @@ public class Compilador {
         }
     }
     
+    /**
+     * Método responsável por adicionar uma ocorrência na lista de ocorrências/problemas encontradas(os)
+     * @param numeroLinha Número da linha em que a ocorrência foi detectada
+     * @param textoOcorrencia Texto do problema encontrada
+     * @param textoSugestao Sugestão para o usuário corrigir o trecho do arquivo HTML
+     */
     private void gerarOcorrencia(int numeroLinha, String textoOcorrencia, String textoSugestao){
         Ocorrencia ocorrencia;
         ocorrencia = new Ocorrencia( numeroLinha,
@@ -269,6 +321,10 @@ public class Compilador {
         listaOcorrencias.inserir( ocorrencia );
     }        
             
+    /**
+     * Método responsável por devolver a representação textual da lista de tags encontradas, caso o arqiuvo já tenha sido analisado
+     * @return Retorna a representação textual das lista de tags encontradas, caso o arquivo já tenha sido analisado
+     */
     public String exibeTags( ){
        if( this.situacaoAnalise != SituacaoAnalise.AguardandoAnalise ){
            return listaTagsEncontradas.toString();
@@ -277,6 +333,10 @@ public class Compilador {
        }
     }
     
+    /**
+     * Método responsável por fornecer a quantidade de tags encontradas no arquivo HTML
+     * @return Retorna o total de tags encontradas
+     */    
     public int totalTags( ){
         if( this.situacaoAnalise != SituacaoAnalise.AguardandoAnalise ){
             int totalTags = 0;
@@ -291,6 +351,9 @@ public class Compilador {
         }    
     }        
     
+    /**
+     * Método responsável por contabalizar as tags do arquivo HTML
+     */    
     public void contabilizarTags(){
         try{                        
             if( this.situacaoAnalise != SituacaoAnalise.AguardandoAnalise ){
@@ -381,6 +444,10 @@ public class Compilador {
         }
     }
     
+    /**
+     * Método responsável por adicionar uma tag na lista de tags encontradas, caso ela não exista, ou incrementar a frequência, caso ela já exista
+     * @param tag Tag encontrada no analisador
+     */    
     private void adicionaTagEncontrada( String tag ){
         TagEncontrada t = new TagEncontrada();
         t.setTag( tag );

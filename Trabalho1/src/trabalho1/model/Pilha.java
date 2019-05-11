@@ -5,19 +5,39 @@
  */
 package trabalho1.model;
 
-import java.util.Collection;
-import trabalho1.model.*;
-
 /**
  *
- * @author Notebook
+ * @authors William Mello e Victor Calazans
  */
 public interface Pilha<T> {
     
-    public void push(T info);    
-    public T pop();                 
+    /**
+     * Método que empilha um dado na pilha
+     * @param info Dado a ser empilhado
+     */
+    public void push(T info);
+    
+    /**
+     * Método que desempilha o último dado da pilha
+     * @return Retorna o dado desempilhado
+     */
+    public T pop();
+    
+    /**
+     * Método que retorna o último dado empilhado
+     * @return retorna o último dado empilhado
+     */
     public T peek();
+    
+    /**
+     * Método que verifica se a pilha está vazia
+     * @return Retorna true para vazia ou falso para não vazia
+     */
     public boolean estaVazia();
+    
+    /**
+     * Método que desempilha todos os dados empilhados
+     */
     public void liberar();
        
 }

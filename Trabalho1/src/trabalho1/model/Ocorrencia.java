@@ -7,7 +7,7 @@ package trabalho1.model;
 
 /**
  *
- * @author Notebook
+ * @authors William Mello e Victor Calazans
  */
 public class Ocorrencia {
         
@@ -15,38 +15,73 @@ public class Ocorrencia {
     private String ocorrencia;    
     private String sugestao;
     
+    /**
+     * setter da variável linha
+     * @param linha variável linha
+     */
     public void setLinha(int linha){
         this.linha = linha;
     }
     
+    /**
+     * getter da variável linha
+     * @return variável linha
+     */
     public int getLinha(){
         return this.linha;
     }
     
+    /**
+     * setter da variável ocorrencia
+     * @param ocorrencia variável ocorrencia
+     */
     public void setOcorrencia(String ocorrencia){
         this.ocorrencia = ocorrencia;
     }
     
-    public String ocorrencia(){
+    /**
+     * getter da variável ocorrencia
+     * @return variável ocorrencia
+     */
+    public String getOcorrencia(){
         return this.ocorrencia;
     }        
     
+    /**
+     * setter da variável sugestao
+     * @param sugestao variável sugestao
+     */
     public void setSugestao(String sugestao){
         this.sugestao = sugestao;
     }
     
+    /**
+     * getter da variável sugestao
+     * @return variável sugestao
+     */
     public String getSugestao(){
         return this.sugestao;
     }
    
+    /**
+     * Construtor da classe Ocorrencia
+     * @param linha variável linha
+     * @param ocorrencia variável ocorrencia
+     * @param sugestao  variável sugestao
+     */
     public Ocorrencia( int linha,
                        String ocorrencia,                     
                        String sugestao ){
-        this.linha      = linha;
-        this.ocorrencia = ocorrencia;        
-        this.sugestao   = sugestao;
+        setLinha( linha );
+        setOcorrencia( ocorrencia );
+        setSugestao( sugestao );
     }
     
+    /**
+     * Método equals sobrescrito para verificar já existe um registro com o mesmo número de linhas
+     * @param obj
+     * @return 
+     */
     @Override
     public boolean equals(Object obj) {
         if (this == obj) {
@@ -65,6 +100,10 @@ public class Ocorrencia {
         return true;
     }
         
+    /**
+     * Método sobrescrito que devolve a representação textual da ocorrência
+     * @return Devolve a representação textual da ocorrencia
+     */
     @Override
     public String toString(){
         String toString;

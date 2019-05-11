@@ -7,7 +7,7 @@ package trabalho1.model;
 
 /**
  *
- * @author Notebook
+ * @authors William Mello e Victor Calazans
  */
 public enum SituacaoAnalise {
     AguardandoAnalise,
