@@ -5,10 +5,22 @@
  */
 package trabalho1.view;
 
+import java.awt.Color;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.util.ArrayList;
+import java.util.Scanner;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import trabalho1.model.Compilador;
+import trabalho1.model.ListaEncadeada;
+import trabalho1.model.NoLista;
 import trabalho1.model.Ocorrencia;
+import trabalho1.model.SituacaoAnalise;
+import trabalho1.model.TagEncontrada;
 
 /**
  *
@@ -23,6 +35,10 @@ public class ValidadorHTML extends javax.swing.JFrame {
         initComponents();
     }
 
+    private ArrayList<File> arrFiles = new ArrayList();
+    private Compilador comp;
+    private Ocorrencia[] ocorrencias;
+
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -34,9 +50,19 @@ public class ValidadorHTML extends javax.swing.JFrame {
 
         jTextField1 = new javax.swing.JTextField();
         jButton1 = new javax.swing.JButton();
-        jtfArquivoHTML = new javax.swing.JTextField();
-        jLabel1 = new javax.swing.JLabel();
-        jButton2 = new javax.swing.JButton();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        jtArquivos = new javax.swing.JTable();
+        jtbErros = new javax.swing.JTabbedPane();
+        jPanel1 = new javax.swing.JPanel();
+        jScrollPane5 = new javax.swing.JScrollPane();
+        tbTabErros = new javax.swing.JTable();
+        lbDescErro = new javax.swing.JLabel();
+        jPanel2 = new javax.swing.JPanel();
+        jScrollPane2 = new javax.swing.JScrollPane();
+        tbHtml = new javax.swing.JTable();
+        jPanel3 = new javax.swing.JPanel();
+        btValidarArquivo = new javax.swing.JButton();
+        btSelArquivo = new javax.swing.JButton();
 
         jTextField1.setText("jTextField1");
 
@@ -49,39 +75,146 @@ public class ValidadorHTML extends javax.swing.JFrame {
             }
         });
 
-        jtfArquivoHTML.setName("jtfArquivoHTML"); // NOI18N
-
-        jLabel1.setText("Arquivo HTML");
-
-        jButton2.setText("Validar");
-        jButton2.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton2ActionPerformed(evt);
+        jtArquivos.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+                {null},
+                {null},
+                {null},
+                {null}
+            },
+            new String [] {
+                "Arquivos"
+            }
+        ));
+        jtArquivos.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                jtArquivosMouseClicked(evt);
             }
         });
+        jScrollPane1.setViewportView(jtArquivos);
+        if (jtArquivos.getColumnModel().getColumnCount() > 0) {
+            jtArquivos.getColumnModel().getColumn(0).setResizable(false);
+        }
+
+        tbTabErros.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+
+            },
+            new String [] {
+
+            }
+        ));
+        jScrollPane5.setViewportView(tbTabErros);
+
+        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
+        jPanel1.setLayout(jPanel1Layout);
+        jPanel1Layout.setHorizontalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addComponent(lbDescErro)
+                        .addContainerGap(1271, Short.MAX_VALUE))
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addComponent(jScrollPane5)
+                        .addContainerGap())))
+        );
+        jPanel1Layout.setVerticalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(lbDescErro)
+                .addGap(18, 18, 18)
+                .addComponent(jScrollPane5, javax.swing.GroupLayout.PREFERRED_SIZE, 239, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+
+        jtbErros.addTab("Erros", jPanel1);
+
+        tbHtml.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+
+            },
+            new String [] {
+
+            }
+        ));
+        jScrollPane2.setViewportView(tbHtml);
+
+        javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
+        jPanel2.setLayout(jPanel2Layout);
+        jPanel2Layout.setHorizontalGroup(
+            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(jScrollPane2, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 1281, Short.MAX_VALUE)
+        );
+        jPanel2Layout.setVerticalGroup(
+            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 273, Short.MAX_VALUE)
+                .addContainerGap())
+        );
+
+        jtbErros.addTab("HTML", jPanel2);
+
+        jPanel3.setBorder(javax.swing.BorderFactory.createTitledBorder("Validador HTML"));
+
+        btValidarArquivo.setText("Validar");
+        btValidarArquivo.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btValidarArquivoActionPerformed(evt);
+            }
+        });
+
+        btSelArquivo.setText("Selecionar Arquivo ");
+        btSelArquivo.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btSelArquivoActionPerformed(evt);
+            }
+        });
+
+        javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
+        jPanel3.setLayout(jPanel3Layout);
+        jPanel3Layout.setHorizontalGroup(
+            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel3Layout.createSequentialGroup()
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(btValidarArquivo, javax.swing.GroupLayout.PREFERRED_SIZE, 155, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(btSelArquivo, javax.swing.GroupLayout.PREFERRED_SIZE, 155, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(9, 9, 9))
+        );
+        jPanel3Layout.setVerticalGroup(
+            jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel3Layout.createSequentialGroup()
+                .addGap(0, 25, Short.MAX_VALUE)
+                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(btValidarArquivo, javax.swing.GroupLayout.PREFERRED_SIZE, 42, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(btSelArquivo, javax.swing.GroupLayout.PREFERRED_SIZE, 42, javax.swing.GroupLayout.PREFERRED_SIZE)))
+        );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGap(35, 35, 35)
-                .addComponent(jLabel1)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jtfArquivoHTML, javax.swing.GroupLayout.PREFERRED_SIZE, 263, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jButton2, javax.swing.GroupLayout.PREFERRED_SIZE, 107, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(36, Short.MAX_VALUE))
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jtbErros)
+                    .addComponent(jScrollPane1, javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(jPanel3, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGap(36, 36, 36)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jtfArquivoHTML, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel1)
-                    .addComponent(jButton2))
-                .addContainerGap(38, Short.MAX_VALUE))
+                .addContainerGap()
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 130, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jtbErros))
         );
 
         pack();
@@ -91,22 +224,153 @@ public class ValidadorHTML extends javax.swing.JFrame {
         this.setLocationRelativeTo(null); // Centraliza o JFrame
     }//GEN-LAST:event_formWindowActivated
 
-    private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
-        File arquivoHTML = new File( jtfArquivoHTML.getText( ) );
-        if( arquivoHTML.exists( ) ){
-            if( arquivoHTML.isFile() ){
-                Compilador compilador = new Compilador( arquivoHTML );
-                compilador.analisarArquivo( );
-                for( Ocorrencia o : compilador.getOcorrencias( ) ){
-                    JOptionPane.showMessageDialog( null, o.toString( ) );
-                }                
-            }else{
-                JOptionPane.showMessageDialog(null, "Caminho informado não é de um arquivo, mas sim de um diretório!");
+    private void btSelArquivoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btSelArquivoActionPerformed
+        //Componente para explorar arquivos.
+        JFileChooser fChooser = new JFileChooser();
+        fChooser.setDialogTitle("Procurar Músicas.");
+        //Apenas para leitura.
+        fChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+        //Filtra o tipo de arquivo a ser buscado pelo explorador.
+        FileNameExtensionFilter filter = new FileNameExtensionFilter("Arquivos", "html");
+        fChooser.setFileFilter(filter);
+        int ret = fChooser.showOpenDialog(this);
+        //Adiciona na tabela o arquivo selecionado.
+        if (ret == JFileChooser.APPROVE_OPTION) {
+            if(arrFiles.contains(fChooser.getSelectedFile())){
+                JOptionPane.showMessageDialog(this, "Este arquivo já está incluso na lista!", "Aviso", JOptionPane.WARNING_MESSAGE);
+                return;
             }
-        }else{
-            JOptionPane.showMessageDialog(null, "Arquivo não encontrado ou não existe!");
+            
+            arrFiles.add(fChooser.getSelectedFile());
+            jtArquivos.setValueAt(fChooser.getSelectedFile().getName(), arrFiles.size() - 1, 0);
         }
-    }//GEN-LAST:event_jButton2ActionPerformed
+
+    }//GEN-LAST:event_btSelArquivoActionPerformed
+    
+    private void btValidarArquivoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btValidarArquivoActionPerformed
+
+        int linhaSelecionada = jtArquivos.getSelectedRow();
+        getArquivoSelecionado(linhaSelecionada);
+        comp.analisarArquivo();
+        ocorrencias = comp.getOcorrencias();
+        TagEncontrada tags[];
+
+        //Variável para armazenar a linha do primeiro erro!
+        int linhaErro = 0;
+        
+        if (comp.getSituacaoAnalise().equals(SituacaoAnalise.AnalisadoComErro)) {
+
+            int count = 0;
+            ListaEncadeada<Ocorrencia> lista = new ListaEncadeada<>();
+            
+            for (Ocorrencia o : ocorrencias) {
+              
+                if(count == 0)
+                    linhaErro = o.getLinha();
+                
+                lista.inserir(o);
+                count++;
+            }
+
+            incializarTabela(lista, "Arquivo análisado com erros!");
+            jtbErros.setTitleAt(0, "(" + count + ") Erros");
+
+        } else if (comp.getSituacaoAnalise().equals(SituacaoAnalise.AnalisadoSemErro)) {
+
+            int linhasTb = 1;
+            comp.contabilizarTags();
+            tags = comp.getTagsEncontradas();
+            //comp.contabilizarTags()
+            ListaEncadeada<TagEncontrada> lista = new ListaEncadeada<>();
+            NoLista<TagEncontrada> noTag;
+            TagEncontrada tag;
+            String numeroFormatado;
+
+            for (int i = 0; i < tags.length; i++) {
+
+                tag = new TagEncontrada();
+                noTag = new NoLista<>();
+                
+                //if(tags[i].getTag().indexOf("</") != -1)
+                //    continue;
+                
+                tag.setTotal(tags[i].getTotal());
+                tag.setTag(tags[i].getTag());
+                noTag.setInfo(tag);
+                lista.inserir(noTag.getInfo());
+                
+            }
+
+            incializarTabela("Arquivo análisado sem erros!", lista);
+
+        }
+
+        try {
+            Scanner scan = new Scanner(arrFiles.get(linhaSelecionada), "UTF-8");
+
+            ListaEncadeada<String> lista = new ListaEncadeada<>();
+            
+            int count = 1;
+            String linha = "";
+            while (scan.hasNext()) {
+                linha = new String(count + " " + scan.nextLine());
+                lista.inserir(linha);
+                count++;
+            }
+            
+            incializarTabela(lista, linhaErro);
+
+        } catch (FileNotFoundException ex) {
+            Logger.getLogger(ValidadorHTML.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+    }//GEN-LAST:event_btValidarArquivoActionPerformed
+
+    public void incializarTabela(String titulo, ListaEncadeada<TagEncontrada> lista) {
+
+        lbDescErro.setText(titulo);
+
+        if (!lista.estaVazia()) {
+            tbTabErros.setModel(new ValidadorTableModel(lista));
+            tbTabErros.setDefaultRenderer(Object.class, new ValidadorCellRender());
+        }
+
+    }
+
+    public void incializarTabela(ListaEncadeada<String> lista, int linhaErro) {
+
+        //lbDescErro.setText(titulo);
+
+        if (lista != null) {
+            tbHtml.setModel(new ValidadorHTMLTableModel(lista));
+            tbHtml.setDefaultRenderer(Object.class, new ValidadorHTMLCellRender(linhaErro));
+        }
+
+    }
+
+    public void incializarTabela(ListaEncadeada<Ocorrencia> lista, String titulo) {
+
+        lbDescErro.setText(titulo);
+
+        if (lista.getPrimeiro().getInfo() != null) {
+            tbTabErros.setModel(new ValidadorErrosTableModel(lista));
+            tbTabErros.setDefaultRenderer(Object.class, new ValidadorErrosCellRender());
+            tbTabErros.setBackground(Color.LIGHT_GRAY);
+        }
+
+    }
+
+    private void getArquivoSelecionado(int linhaSelecionada) {
+        //Inicia instânci a
+        if (linhaSelecionada >= arrFiles.size()) {
+            return;
+        }
+
+        comp = new Compilador(arrFiles.get(linhaSelecionada));
+    }
+    private void jtArquivosMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jtArquivosMouseClicked
+        //Rotina 
+    }//GEN-LAST:event_jtArquivosMouseClicked
 
     /**
      * @param args the command line arguments
@@ -144,10 +408,20 @@ public class ValidadorHTML extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton btSelArquivo;
+    private javax.swing.JButton btValidarArquivo;
     private javax.swing.JButton jButton1;
-    private javax.swing.JButton jButton2;
-    private javax.swing.JLabel jLabel1;
+    private javax.swing.JPanel jPanel1;
+    private javax.swing.JPanel jPanel2;
+    private javax.swing.JPanel jPanel3;
+    private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JScrollPane jScrollPane2;
+    private javax.swing.JScrollPane jScrollPane5;
     private javax.swing.JTextField jTextField1;
-    private javax.swing.JTextField jtfArquivoHTML;
+    private javax.swing.JTable jtArquivos;
+    private javax.swing.JTabbedPane jtbErros;
+    private javax.swing.JLabel lbDescErro;
+    private javax.swing.JTable tbHtml;
+    private javax.swing.JTable tbTabErros;
     // End of variables declaration//GEN-END:variables
 }
