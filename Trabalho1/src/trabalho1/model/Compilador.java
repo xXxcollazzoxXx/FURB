@@ -286,7 +286,8 @@ public class Compilador {
                     }
                 }
                 arquivoHTML.close();
-                while( quantidadeRegistros > 0 ){
+                while( listaOcorrencias.estaVazia()
+                    && quantidadeRegistros > 0 ){
                     NoLista<String> tag = listaTagsFechamento.buscar( pilhaTagsAbertura.peek().replace("<", "</") );
                     if( tag != null ){
                         listaTagsFechamento.retirar( tag.getInfo() );                    
